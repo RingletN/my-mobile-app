@@ -7,7 +7,7 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
-  const { login, isLoading } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // Убрали isLoading, так как он не используется здесь
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -15,8 +15,11 @@ const LoginScreen = ({ navigation }) => {
       return;
     }
     const result = await login(email, password, rememberMe);
-    if (result.success) navigation.navigate('Home');
-    else Alert.alert('Ошибка', result.error);
+    if (result.success) {
+      navigation.replace('Main'); // Переход на экран с табами
+    } else {
+      Alert.alert('Ошибка', result.error);
+    }
   };
 
   return (
@@ -26,7 +29,7 @@ const LoginScreen = ({ navigation }) => {
       setEmail={setEmail}
       password={password}
       setPassword={setPassword}
-      isLoading={isLoading}
+      isLoading={false} // Теперь isLoading управляется в AuthProvider
       handleSubmit={handleLogin}
       submitText="Войти"
       linkText="Нет аккаунта? Зарегистрироваться"

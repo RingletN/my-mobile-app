@@ -7,8 +7,8 @@ const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { register, isLoading } = useContext(AuthContext);
-  const [rememberMe, setRememberMe] = useState(false); // Не используется, но нужен для AuthForm
+  const { register } = useContext(AuthContext); // Убрали isLoading
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleRegister = async () => {
     if (!name || !email || !password) {
@@ -16,8 +16,11 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
     const result = await register(name, email, password);
-    if (result.success) navigation.navigate('Home');
-    else Alert.alert('Ошибка', result.error);
+    if (result.success) {
+      navigation.replace('Main'); // Переход на экран с табами
+    } else {
+      Alert.alert('Ошибка', result.error);
+    }
   };
 
   return (
@@ -29,7 +32,7 @@ const RegisterScreen = ({ navigation }) => {
       setPassword={setPassword}
       name={name}
       setName={setName}
-      isLoading={isLoading}
+      isLoading={false}
       handleSubmit={handleRegister}
       submitText="Зарегистрироваться"
       linkText="Уже есть аккаунт? Войти"
