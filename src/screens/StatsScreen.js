@@ -98,27 +98,28 @@ const StatsScreen = () => {
         </TouchableOpacity>
 
         {/* Таблица */}
-        <ScrollView style={styles.tableContainer}>
-          <Table>
-            <TableRow>
-              {['Дата', '😊', '😐', '😢', '😡', '🥱'].map((header, index) => (
-                <Text key={index} style={[styles.cell, styles.headerCell, { width: width / 6 }]}>{header}</Text>
-              ))}
-            </TableRow>
-            {Object.entries(moodStats).map(([date, stats]) => (
-              <TableRow key={date}>
-                <TouchableOpacity onPress={() => handleDatePress(date)} style={[styles.cell, { width: width / 6 }]}>
-                  <Text style={styles.cellText}>{date}</Text>
-                </TouchableOpacity>
-                <Text style={[styles.cell, styles.cellText, { width: width / 6 }]}>{stats.happy}</Text>
-                <Text style={[styles.cell, styles.cellText, { width: width / 6 }]}>{stats.neutral}</Text>
-                <Text style={[styles.cell, styles.cellText, { width: width / 6 }]}>{stats.sad}</Text>
-                <Text style={[styles.cell, styles.cellText, { width: width / 6 }]}>{stats.angry}</Text>
-                <Text style={[styles.cell, styles.cellText, { width: width / 6 }]}>{stats.tired}</Text>
-              </TableRow>
-            ))}
-          </Table>
-        </ScrollView>
+        // Изменения в рендере таблицы
+<ScrollView style={styles.tableContainer}>
+  <Table style={styles.table}>
+    <TableRow>
+      {['Дата', '😊', '😐', '😢', '😡', '🥱'].map((header, index) => (
+        <Text key={index} style={[styles.cell, styles.headerCell, { flex: 1, minWidth: 0 }]}>{header}</Text>
+      ))}
+    </TableRow>
+    {Object.entries(moodStats).map(([date, stats]) => (
+      <TableRow key={date}>
+        <TouchableOpacity onPress={() => handleDatePress(date)} style={[styles.cell, { flex: 1, minWidth: 0 }]}>
+          <Text style={styles.cellText}>{date}</Text>
+        </TouchableOpacity>
+        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.happy}</Text>
+        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.neutral}</Text>
+        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.sad}</Text>
+        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.angry}</Text>
+        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.tired}</Text>
+      </TableRow>
+    ))}
+  </Table>
+</ScrollView>
 
         {/* Графики */}
         <ScrollView style={styles.chartContainer}>
@@ -253,12 +254,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    width: '100%',
+  },
+  table: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   cell: {
     padding: 12,
     textAlign: 'center',
     borderRightWidth: 1,
     borderRightColor: '#E0E0E0',
+    flex: 1,
+    minWidth: 0, // Убирает лишнее пространство
   },
   headerCell: {
     fontWeight: '700',

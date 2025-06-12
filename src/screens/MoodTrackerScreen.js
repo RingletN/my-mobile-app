@@ -111,20 +111,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moodButton: {
-    width: 60,
-    height: 60,
+    width: 80, // Увеличил размер кнопки
+    height: 80, // Увеличил размер кнопки
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
-    borderRadius: 30,
+    borderRadius: 40, // Соответствует половине ширины/высоты
     backgroundColor: '#f0f0f0',
+    padding: 10, // Увеличил внутренний отступ
   },
   selectedMood: {
     backgroundColor: '#5770C5',
     transform: [{ scale: 1.1 }],
   },
   moodText: {
-    fontSize: 30,
+    fontSize: 24, // Уменьшил размер текста
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
