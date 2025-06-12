@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   moodsScroll: {
     marginVertical: 15,
-    maxHeight: 70,
+    maxHeight: 80,
     position: 'absolute',
     top: 80,
     left: 20,
@@ -111,21 +111,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moodButton: {
-    width: 80, // Увеличил размер кнопки
-    height: 80, // Увеличил размер кнопки
+    width: 60, // Вернул меньший размер
+    height: 60, // Вернул меньший размер
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
-    borderRadius: 40, // Соответствует половине ширины/высоты
+    marginRight: 10,
+    borderRadius: 30,
     backgroundColor: '#f0f0f0',
-    padding: 10, // Увеличил внутренний отступ
+    padding: 10,
   },
   selectedMood: {
     backgroundColor: '#5770C5',
-    transform: [{ scale: 1.1 }],
+    // transform: [{ scale: 1.05 }], // Уменьшил масштаб
   },
   moodText: {
-    fontSize: 24, // Уменьшил размер текста
+    fontSize: 22, // Уменьшил размер текста
     textAlign: 'center',
   },
   input: {
