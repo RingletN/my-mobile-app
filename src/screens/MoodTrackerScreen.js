@@ -1,3 +1,4 @@
+// MoodTrackerScreen.js
 import React, { useState, useContext } from 'react';
 import {
   View,
@@ -31,7 +32,8 @@ const MoodTrackerScreen = () => {
       id: Date.now(),
       emoji: mood,
       note,
-      date: new Date().toLocaleDateString(),
+      date: new Date().toLocaleDateString('ru-RU'),
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
     };
     await addMood(newMood);
     setNote('');
@@ -40,29 +42,16 @@ const MoodTrackerScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <View style={[styles.relativeContainer, isLandscape && styles.relativeContainerLandscape]}>
         <Text style={styles.title}>Как вы себя чувствуете, {user?.name}?</Text>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={[styles.moodsScroll, isLandscape && styles.moodsScrollLandscape]}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.moodsScroll, isLandscape && styles.moodsScrollLandscape]}>
           {moods.map((emoji) => (
-            <TouchableOpacity
-              key={emoji}
-              style={[styles.moodButton, mood === emoji && styles.selectedMood]}
-              onPress={() => setMood(emoji)}
-            >
+            <TouchableOpacity key={emoji} style={[styles.moodButton, mood === emoji && styles.selectedMood]} onPress={() => setMood(emoji)}>
               <Text style={styles.moodText}>{emoji}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
-
         <TextInput
           style={[styles.input, isLandscape && styles.inputLandscape]}
           placeholder="Опишите подробнее..."
@@ -70,19 +59,10 @@ const MoodTrackerScreen = () => {
           onChangeText={setNote}
           multiline
         />
-
-        <TouchableOpacity
-          style={[styles.saveButton, isLandscape && styles.saveButtonLandscape]}
-          onPress={saveMood}
-          disabled={!mood}
-        >
+        <TouchableOpacity style={[styles.saveButton, isLandscape && styles.saveButtonLandscape]} onPress={saveMood} disabled={!mood}>
           <Text style={styles.buttonText}>Сохранить настроение</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.helpButton}
-          onPress={() => Alert.alert('Помощь', 'Выберите эмодзи и добавьте заметку')}
-        >
+        <TouchableOpacity style={styles.helpButton} onPress={() => Alert.alert('Помощь', 'Выберите эмодзи и добавьте заметку')}>
           <Text style={styles.helpText}>?</Text>
         </TouchableOpacity>
       </View>

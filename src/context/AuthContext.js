@@ -1,3 +1,4 @@
+// AuthContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -8,35 +9,31 @@ export const AuthProvider = ({ children }) => {
   const [moods, setMoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Инициализация тестовых данных для нового пользователя
   const initializeTestData = async (userId) => {
     try {
-      await AsyncStorage.clear();
-      
       const moodsData = await AsyncStorage.getItem('userMoods');
       const existingMoods = moodsData ? JSON.parse(moodsData) : [];
       const userMoods = existingMoods.filter(m => m.userId === userId);
 
       if (userMoods.length === 0) {
         const testMoods = [
-          { id: Date.now() - 86400000 * 2, emoji: '😊', note: 'Хороший день!', date: '11.06.2025', userId },
-          { id: Date.now() - 86400000 * 1, emoji: '😐', note: 'Средний день', date: '12.06.2025', userId },
-          { id: Date.now(), emoji: '😢', note: 'Плохое настроение', date: '13.06.2025', userId },
+          { id: Date.now() - 86400000 * 2, emoji: '😊', note: 'Хороший день!', date: '11.06.2025', time: '09:00', userId },
+          { id: Date.now() - 86400000 * 1, emoji: '😐', note: 'Средний день', date: '12.06.2025', time: '14:30', userId },
+          { id: Date.now(), emoji: '😢', note: 'Плохое настроение', date: '13.06.2025', time: '18:45', userId },
         ];
         const updatedMoods = [...existingMoods, ...testMoods];
         await AsyncStorage.setItem('userMoods', JSON.stringify(updatedMoods));
         console.log('Инициализированы тестовые данные для userId:', userId, updatedMoods);
-        setMoods(testMoods); // Устанавливаем только тестовые данные для текущего пользователя
+        setMoods(testMoods);
       } else {
         console.log('Данные для пользователя уже существуют:', userMoods);
-        setMoods(userMoods); // Устанавливаем существующие данные
+        setMoods(userMoods);
       }
     } catch (e) {
       console.error('Ошибка инициализации тестовых данных:', e);
     }
   };
 
-  // Загрузка данных при старте
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -44,10 +41,14 @@ export const AuthProvider = ({ children }) => {
         if (userData) {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
-          // Загружаем настроения для пользователя
           const moodsData = await AsyncStorage.getItem('userMoods');
           if (moodsData) {
-            const parsedMoods = JSON.parse(moodsData);
+            let parsedMoods = JSON.parse(moodsData);
+            parsedMoods = parsedMoods.map(mood => ({
+              ...mood,
+              time: mood.time || '00:00',
+            }));
+            await AsyncStorage.setItem('userMoods', JSON.stringify(parsedMoods));
             const userMoods = parsedMoods.filter(m => m.userId === parsedUser.id);
             setMoods(userMoods);
           }
@@ -59,9 +60,30 @@ export const AuthProvider = ({ children }) => {
       }
     };
     loadData();
-  }, []); // Пустая зависимость, чтобы выполнилось один раз при монтировании
+  }, []);
 
-  // Регистрация
+  useEffect(() => {
+    if (user) {
+      const loadUserMoods = async () => {
+        try {
+          const moodsData = await AsyncStorage.getItem('userMoods');
+          if (moodsData) {
+            const parsedMoods = JSON.parse(moodsData);
+            const userMoods = parsedMoods.filter(m => m.userId === user.id);
+            setMoods(userMoods);
+          } else {
+            setMoods([]);
+          }
+        } catch (e) {
+          console.error('Ошибка загрузки настроений:', e);
+        }
+      };
+      loadUserMoods();
+    } else {
+      setMoods([]);
+    }
+  }, [user]);
+
   const register = async (name, email, password) => {
     try {
       const usersData = await AsyncStorage.getItem('users');
@@ -73,20 +95,18 @@ export const AuthProvider = ({ children }) => {
       if (users.some(u => u.email === email)) {
         return { success: false, error: 'Email уже зарегистрирован' };
       }
-
       const newUser = { id: Date.now(), name, email, password };
       const updatedUsers = [...users, newUser];
       await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
       await AsyncStorage.setItem('currentUser', JSON.stringify(newUser));
       setUser(newUser);
-      await initializeTestData(newUser.id); // Инициализируем тестовые данные для нового пользователя
+      await initializeTestData(newUser.id);
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Ошибка регистрации' };
     }
   };
 
-  // Вход
   const login = async (email, password, rememberMe) => {
     try {
       const usersData = await AsyncStorage.getItem('users');
@@ -98,7 +118,6 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.setItem('currentUser', JSON.stringify(foundUser));
       await AsyncStorage.setItem('rememberMe', rememberMe.toString());
       setUser(foundUser);
-      // Загружаем настроения для вошедшего пользователя
       const moodsData = await AsyncStorage.getItem('userMoods');
       if (moodsData) {
         const parsedMoods = JSON.parse(moodsData);
@@ -111,19 +130,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Выход
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('currentUser');
       await AsyncStorage.setItem('rememberMe', 'false');
       setUser(null);
-      setMoods([]); // Очищаем настроения при выходе
+      setMoods([]);
     } catch (e) {
       console.error('Ошибка выхода:', e);
     }
   };
 
-  // Добавление настроения
   const addMood = async (newMood) => {
     try {
       const moodWithUser = { ...newMood, userId: user?.id };
@@ -131,13 +148,12 @@ export const AuthProvider = ({ children }) => {
       const existingMoods = moodsData ? JSON.parse(moodsData) : [];
       const updatedMoods = [...existingMoods, moodWithUser];
       await AsyncStorage.setItem('userMoods', JSON.stringify(updatedMoods));
-      setMoods(prevMoods => [...prevMoods, moodWithUser]); // Обновляем локальное состояние
+      setMoods(prevMoods => [...prevMoods, moodWithUser]);
     } catch (e) {
       console.error('Ошибка сохранения настроения:', e);
     }
   };
 
-  // Экспорт данных в JSON
   const exportData = async () => {
     try {
       const moodsData = await AsyncStorage.getItem('userMoods');
@@ -151,18 +167,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        moods,
-        isLoading,
-        register,
-        login,
-        logout,
-        addMood,
-        exportData,
-      }}
-    >
+    <AuthContext.Provider value={{ user, moods, isLoading, register, login, logout, addMood, exportData }}>
       {children}
     </AuthContext.Provider>
   );
