@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { StyleSheet } from 'react-native';
 
@@ -29,21 +30,27 @@ export const AuthForm = ({
   rememberMe,
   setRememberMe,
 }) => {
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={styles.formContainer}>
+      <View style={[styles.formContainer, isLandscape && styles.formContainerLandscape]}>
         {/* Логотип */}
         <View style={styles.logoContainer}>
-          <Image source={require('../assets/logo.png')} style={styles.logo} />
+          <Image
+            source={require('../assets/logo.png')} // Путь остаётся прежним
+            style={[styles.logo, isLandscape && styles.logoLandscape]}
+          />
         </View>
 
         {/* Поле имени (для регистрации) */}
         {isRegister && (
           <TextInput
-            style={styles.input}
+            style={[styles.input, isLandscape && styles.inputLandscape]}
             placeholder="Имя"
             placeholderTextColor="#aaa"
             value={name}
@@ -53,7 +60,7 @@ export const AuthForm = ({
 
         {/* Поле email */}
         <TextInput
-          style={styles.input}
+          style={[styles.input, isLandscape && styles.inputLandscape]}
           placeholder="Email"
           placeholderTextColor="#aaa"
           keyboardType="email-address"
@@ -63,7 +70,7 @@ export const AuthForm = ({
 
         {/* Поле пароля */}
         <TextInput
-          style={styles.input}
+          style={[styles.input, isLandscape && styles.inputLandscape]}
           placeholder="Пароль"
           placeholderTextColor="#aaa"
           secureTextEntry
@@ -73,12 +80,9 @@ export const AuthForm = ({
 
         {/* Чекбокс "Запомнить меня" (для входа) */}
         {!isRegister && (
-          <View style={styles.rememberMeContainer}>
+          <View style={[styles.rememberMeContainer, isLandscape && styles.rememberMeContainerLandscape]}>
             <TouchableOpacity onPress={() => setRememberMe(!rememberMe)}>
-              <View style={[
-                styles.checkbox,
-                rememberMe && styles.checkedCircle,
-              ]} />
+              <View style={[styles.checkbox, rememberMe && styles.checkedCircle]} />
             </TouchableOpacity>
             <Text style={styles.rememberMeText}>Запомнить меня</Text>
           </View>
@@ -88,7 +92,10 @@ export const AuthForm = ({
         {isLoading ? (
           <ActivityIndicator size="large" color="#5770C5" />
         ) : (
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={[styles.button, isLandscape && styles.buttonLandscape]}
+            onPress={handleSubmit}
+          >
             <Text style={styles.buttonText}>{submitText}</Text>
           </TouchableOpacity>
         )}
@@ -120,13 +127,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  formContainerLandscape: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   logoContainer: {
     marginBottom: 30,
     alignItems: 'center',
   },
   logo: {
-    width: 600, 
+    width: 600, // Возвращаем значение, которое работало раньше
     resizeMode: 'contain',
+  },
+  logoLandscape: {
+    width: 200, // Уменьшаем для ландшафтной ориентации
+    height: 100,
   },
   input: {
     width: '80%',
@@ -139,6 +156,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     color: '#333',
   },
+  inputLandscape: {
+    width: '45%',
+    marginHorizontal: 10,
+  },
   button: {
     backgroundColor: '#5770C5',
     paddingVertical: 15,
@@ -147,6 +168,10 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     width: '80%',
     alignItems: 'center',
+  },
+  buttonLandscape: {
+    width: '45%',
+    marginHorizontal: 10,
   },
   buttonText: {
     color: '#fff',
@@ -168,7 +193,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     width: '80%',
-    justifyContent: 'center', // Центрируем чекбокс и текст
+    justifyContent: 'center',
+  },
+  rememberMeContainerLandscape: {
+    width: '45%',
+    marginHorizontal: 10,
   },
   checkbox: {
     width: 20,
@@ -185,5 +214,4 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
-
 export default AuthForm;

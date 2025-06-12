@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Alert } from 'react-native';
+import { Alert, ActivityIndicator } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { AuthForm } from '../components/AuthForm';
 
@@ -7,7 +7,7 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
-  const { login } = useContext(AuthContext); // Убрали isLoading, так как он не используется здесь
+  const { login, isLoading } = useContext(AuthContext);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -16,11 +16,17 @@ const LoginScreen = ({ navigation }) => {
     }
     const result = await login(email, password, rememberMe);
     if (result.success) {
-      navigation.replace('Main'); // Переход на экран с табами
+      navigation.replace('Main');
     } else {
       Alert.alert('Ошибка', result.error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <ActivityIndicator size="large" color="#5770C5" style={{ flex: 1, justifyContent: 'center' }} />
+    );
+  }
 
   return (
     <AuthForm
@@ -29,7 +35,7 @@ const LoginScreen = ({ navigation }) => {
       setEmail={setEmail}
       password={password}
       setPassword={setPassword}
-      isLoading={false} // Теперь isLoading управляется в AuthProvider
+      isLoading={isLoading}
       handleSubmit={handleLogin}
       submitText="Войти"
       linkText="Нет аккаунта? Зарегистрироваться"
