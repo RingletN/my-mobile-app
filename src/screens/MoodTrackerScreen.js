@@ -1,4 +1,3 @@
-// MoodTrackerScreen.js
 import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
@@ -16,9 +15,11 @@ import {
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import AuthViewModel from '../viewmodels/AuthViewModel';
+import MoodViewModel from '../viewmodels/MoodViewModel';
 
 const MoodTrackerScreen = () => {
-  const { user, addMood, fetchRandomQuote, quote, isQuoteLoading, quoteError } = useContext(AuthContext);
+  const { user, setMoods, quote, setQuote, isQuoteLoading, setIsQuoteLoading, quoteError, setQuoteError, cachedQuotes, setCachedQuotes } = useContext(AuthContext);
   const [mood, setMood] = useState(null);
   const [note, setNote] = useState('');
   const [quoteModalVisible, setQuoteModalVisible] = useState(false);
@@ -26,9 +27,8 @@ const MoodTrackerScreen = () => {
   const isLandscape = width > height;
 
   useEffect(() => {
-    // Опциональная загрузка цитаты при старте
-    fetchRandomQuote();
-  }, [fetchRandomQuote]);
+    MoodViewModel.fetchRandomQuote(false, setQuote, setIsQuoteLoading, setQuoteError, cachedQuotes, setCachedQuotes);
+  }, [setQuote, setIsQuoteLoading, setQuoteError, cachedQuotes, setCachedQuotes]);
 
   const moods = ['😊', '😐', '😢', '😡', '🥱'];
 
@@ -44,22 +44,22 @@ const MoodTrackerScreen = () => {
       date: new Date().toLocaleDateString('ru-RU'),
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
     };
-    await addMood(newMood);
+    await AuthViewModel.addMood(newMood, user, setMoods);
     setNote('');
     setMood(null);
     Alert.alert('Успех', 'Настроение сохранено');
   };
 
   const loadQuote = async () => {
-    await fetchRandomQuote(); // Дожидаемся загрузки цитаты
-    setQuoteModalVisible(true); // Открываем модальное окно только после получения цитаты
+    await MoodViewModel.fetchRandomQuote(false, setQuote, setIsQuoteLoading, setQuoteError, cachedQuotes, setCachedQuotes);
+    setQuoteModalVisible(true);
   };
 
   const addQuoteToNote = () => {
-    if (quote && note.indexOf(quote) === -1) { // Проверяем, чтобы цитата не дублировалась
+    if (quote && note.indexOf(quote) === -1) {
       setNote(prevNote => (prevNote ? `${prevNote}\n\n${quote}` : quote));
     }
-    setQuoteModalVisible(false); // Закрываем модальное окно после добавления
+    setQuoteModalVisible(false);
   };
 
   return (

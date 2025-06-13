@@ -2,19 +2,23 @@ import React, { useState, useContext } from 'react';
 import { Alert, ActivityIndicator } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { AuthForm } from '../components/AuthForm';
+import AuthViewModel from '../viewmodels/AuthViewModel';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
-  const { login, isLoading } = useContext(AuthContext);
+  const { setUser, setMoods, isLoading, setIsLoading } = useContext(AuthContext);
 
   const handleLogin = async () => {
+    setIsLoading(true);
     if (!email || !password) {
       Alert.alert('Ошибка', 'Заполните все поля');
+      setIsLoading(false);
       return;
     }
-    const result = await login(email, password, rememberMe);
+    const result = await AuthViewModel.login(email, password, rememberMe, setUser, setMoods);
+    setIsLoading(false);
     if (result.success) {
       navigation.replace('Main');
     } else {

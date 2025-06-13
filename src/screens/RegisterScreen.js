@@ -2,22 +2,26 @@ import React, { useState, useContext } from 'react';
 import { Alert } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { AuthForm } from '../components/AuthForm';
+import AuthViewModel from '../viewmodels/AuthViewModel';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { register } = useContext(AuthContext); // Убрали isLoading
   const [rememberMe, setRememberMe] = useState(false);
+  const { setUser, setMoods, setIsLoading } = useContext(AuthContext);
 
   const handleRegister = async () => {
+    setIsLoading(true);
     if (!name || !email || !password) {
       Alert.alert('Ошибка', 'Заполните все поля');
+      setIsLoading(false);
       return;
     }
-    const result = await register(name, email, password);
+    const result = await AuthViewModel.register(name, email, password, setUser, setMoods);
+    setIsLoading(false);
     if (result.success) {
-      navigation.replace('Main'); // Переход на экран с табами
+      navigation.replace('Main');
     } else {
       Alert.alert('Ошибка', result.error);
     }

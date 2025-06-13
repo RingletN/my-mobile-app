@@ -1,10 +1,15 @@
 import React, { useContext, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import AuthViewModel from '../viewmodels/AuthViewModel';
 
 const ProfileScreen = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, setUser, setMoods } = useContext(AuthContext);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
+
+  const handleLogout = async () => {
+    await AuthViewModel.logout(setUser, setMoods);
+  };
 
   return (
     <View style={styles.container}>
@@ -15,17 +20,9 @@ const ProfileScreen = () => {
         <Text style={styles.label}>Email: {user?.email}</Text>
       </View>
 
-      <View style={styles.settingItem}>
-        <Text>Темная тема</Text>
-        <Switch
-          value={isDarkTheme}
-          onValueChange={setIsDarkTheme}
-        />
-      </View>
-
       <TouchableOpacity 
         style={styles.logoutButton} 
-        onPress={logout}
+        onPress={handleLogout}
       >
         <Text style={styles.buttonText}>Выйти</Text>
       </TouchableOpacity>

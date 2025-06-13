@@ -1,14 +1,14 @@
-// StatsScreen.js
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, useWindowDimensions, Modal, TextInput } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { Table, TableRow } from '../components/TableComponent';
-import * as Clipboard from 'expo-clipboard';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import MoodViewModel from '../MoodViewModel';
+import StatsViewModel from '../viewmodels/StatsViewModel';
+import AuthViewModel from '../viewmodels/AuthViewModel';
+import MoodViewModel from '../viewmodels/MoodViewModel';
 
 const StatsScreen = () => {
-  const { moods, exportData, addMood, user } = useContext(AuthContext);
+  const { moods, user, setMoods, setQuote, setIsQuoteLoading, setQuoteError, cachedQuotes, setCachedQuotes } = useContext(AuthContext);
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const [exportModalVisible, setExportModalVisible] = useState(false);
@@ -19,66 +19,31 @@ const StatsScreen = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [dateDetails, setDateDetails] = useState([]);
 
-  // Сортировка и статистика
-  const sortedMoods = [...moods].sort((a, b) => new Date(b.date.split('.').reverse().join('-')) - new Date(a.date.split('.').reverse().join('-')));
-  const moodStats = sortedMoods.reduce((acc, mood) => {
-    const date = mood.date;
-    if (!acc[date]) {
-      acc[date] = { happy: 0, neutral: 0, sad: 0, angry: 0, tired: 0 };
-    }
-    if (mood.emoji === '😊') acc[date].happy++;
-    else if (mood.emoji === '😐') acc[date].neutral++;
-    else if (mood.emoji === '😢') acc[date].sad++;
-    else if (mood.emoji === '😡') acc[date].angry++;
-    else if (mood.emoji === '🥱') acc[date].tired++;
-    return acc;
-  }, {});
+  const sortedMoods = StatsViewModel.getSortedMoods(moods);
+  const moodStats = StatsViewModel.getMoodStats(moods);
 
   useEffect(() => {
-    // Загрузка цитаты при монтировании (опционально)
-    MoodViewModel.fetchRandomQuote();
-  }, []);
+    MoodViewModel.fetchRandomQuote(false, setQuote, setIsQuoteLoading, setQuoteError, cachedQuotes, setCachedQuotes);
+  }, [setQuote, setIsQuoteLoading, setQuoteError, cachedQuotes, setCachedQuotes]);
 
   const handleExport = async () => {
-    const data = await exportData();
-    if (data.length > 0) {
-      const filteredData = data.map(({ id, ...rest }) => rest);
-      setExportedData(JSON.stringify(filteredData, null, 2));
-      setExportModalVisible(true);
-    } else {
-      Alert.alert('Ошибка', 'Нет данных для экспорта');
+    const result = await StatsViewModel.handleExport(user, setExportedData, setExportModalVisible);
+    if (!result.success) {
+      Alert.alert('Ошибка', result.error);
     }
   };
 
   const handleCopy = async () => {
-    await Clipboard.setStringAsync(exportedData);
-    Alert.alert('Успех', 'Данные скопированы в буфер обмена');
+    const result = await StatsViewModel.handleCopy(exportedData);
+    Alert.alert('Успех', result.message);
   };
 
   const handleImport = async () => {
-    try {
-      const parsedData = JSON.parse(importedJson);
-      if (!Array.isArray(parsedData)) {
-        throw new Error('Данные должны быть массивом');
-      }
-      const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
-      for (const mood of parsedData) {
-        if (!mood.emoji || !mood.date || !dateRegex.test(mood.date)) {
-          throw new Error('Некорректный формат данных: отсутствует emoji или date (ожидается DD.MM.YYYY)');
-        }
-        await addMood({
-          id: Date.now() + Math.random(),
-          emoji: mood.emoji,
-          note: mood.note || '',
-          date: mood.date,
-          time: mood.time || '00:00',
-        });
-      }
-      setImportedJson('');
-      setImportModalVisible(false);
-      Alert.alert('Успех', 'Данные импортированы');
-    } catch (e) {
-      Alert.alert('Ошибка', `Ошибка при импорте: ${e.message}`);
+    const result = await StatsViewModel.handleImport(importedJson, setImportedJson, setImportModalVisible, (mood) => AuthViewModel.addMood(mood, user, setMoods));
+    if (result.success) {
+      Alert.alert('Успех', result.message);
+    } else {
+      Alert.alert('Ошибка', result.error);
     }
   };
 
@@ -88,9 +53,6 @@ const StatsScreen = () => {
     setSelectedDate(date);
     setDetailModalVisible(true);
   };
-
-  const getMaxValue = (stats) => Math.max(...Object.values(stats).filter(v => typeof v === 'number'));
-  const normalizeValue = (value, max) => (max > 0 ? value / max : 0);
 
   return (
     <View style={[styles.container, isLandscape && styles.containerLandscape]}>
@@ -127,16 +89,16 @@ const StatsScreen = () => {
 
         <ScrollView style={styles.chartContainer}>
           {Object.entries(moodStats).map(([date, stats]) => {
-            const maxValue = getMaxValue(stats);
+            const maxValue = StatsViewModel.getMaxValue(stats);
             return (
               <TouchableOpacity key={date} onPress={() => handleDatePress(date)} style={[styles.chartRow, isLandscape && styles.chartRowLandscape]}>
                 <Text style={[styles.chartLabel, isLandscape && styles.chartLabelLandscape]}>{date}</Text>
                 <View style={[styles.barContainer, isLandscape && styles.barContainerLandscape]}>
-                  <View style={[styles.bar, { flex: normalizeValue(stats.happy, maxValue), backgroundColor: '#4CAF50' }]} />
-                  <View style={[styles.bar, { flex: normalizeValue(stats.neutral, maxValue), backgroundColor: '#FFC107' }]} />
-                  <View style={[styles.bar, { flex: normalizeValue(stats.sad, maxValue), backgroundColor: '#F44336' }]} />
-                  <View style={[styles.bar, { flex: normalizeValue(stats.angry, maxValue), backgroundColor: '#FF5722' }]} />
-                  <View style={[styles.bar, { flex: normalizeValue(stats.tired, maxValue), backgroundColor: '#9E9E9E' }]} />
+                  <View style={[styles.bar, { flex: StatsViewModel.normalizeValue(stats.happy, maxValue), backgroundColor: '#4CAF50' }]} />
+                  <View style={[styles.bar, { flex: StatsViewModel.normalizeValue(stats.neutral, maxValue), backgroundColor: '#FFC107' }]} />
+                  <View style={[styles.bar, { flex: StatsViewModel.normalizeValue(stats.sad, maxValue), backgroundColor: '#F44336' }]} />
+                  <View style={[styles.bar, { flex: StatsViewModel.normalizeValue(stats.angry, maxValue), backgroundColor: '#FF5722' }]} />
+                  <View style={[styles.bar, { flex: StatsViewModel.normalizeValue(stats.tired, maxValue), backgroundColor: '#9E9E9E' }]} />
                 </View>
               </TouchableOpacity>
             );
