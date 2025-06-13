@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { Table, TableRow } from '../components/TableComponent';
 import * as Clipboard from 'expo-clipboard';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import MoodViewModel from '../MoodViewModel';
 
 const StatsScreen = () => {
   const { moods, exportData, addMood, user } = useContext(AuthContext);
@@ -32,6 +33,11 @@ const StatsScreen = () => {
     else if (mood.emoji === '🥱') acc[date].tired++;
     return acc;
   }, {});
+
+  useEffect(() => {
+    // Загрузка цитаты при монтировании (опционально)
+    MoodViewModel.fetchRandomQuote();
+  }, []);
 
   const handleExport = async () => {
     const data = await exportData();
@@ -97,31 +103,28 @@ const StatsScreen = () => {
           <Text style={styles.buttonText}>Импортировать данные</Text>
         </TouchableOpacity>
 
-        {/* Таблица */}
-        // Изменения в рендере таблицы
-<ScrollView style={styles.tableContainer}>
-  <Table style={styles.table}>
-    <TableRow>
-      {['Дата', '😊', '😐', '😢', '😡', '🥱'].map((header, index) => (
-        <Text key={index} style={[styles.cell, styles.headerCell, { flex: 1, minWidth: 0 }]}>{header}</Text>
-      ))}
-    </TableRow>
-    {Object.entries(moodStats).map(([date, stats]) => (
-      <TableRow key={date}>
-        <TouchableOpacity onPress={() => handleDatePress(date)} style={[styles.cell, { flex: 1, minWidth: 0 }]}>
-          <Text style={styles.cellText}>{date}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.happy}</Text>
-        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.neutral}</Text>
-        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.sad}</Text>
-        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.angry}</Text>
-        <Text style={[styles.cell, styles.cellText, { flex: 1, minWidth: 0 }]}>{stats.tired}</Text>
-      </TableRow>
-    ))}
-  </Table>
-</ScrollView>
+        <ScrollView style={styles.tableContainer}>
+          <Table style={styles.table}>
+            <TableRow>
+              {['Дата', '😊', '😐', '😢', '😡', '🥱'].map((header, index) => (
+                <Text key={index} style={[styles.cell, styles.headerCell, { flex: 1, width: `${100 / 6}%` }]}>{header}</Text>
+              ))}
+            </TableRow>
+            {Object.entries(moodStats).map(([date, stats]) => (
+              <TableRow key={date}>
+                <TouchableOpacity onPress={() => handleDatePress(date)} style={[styles.cell, { flex: 1, width: `${100 / 6}%` }]}>
+                  <Text style={styles.cellText}>{date}</Text>
+                </TouchableOpacity>
+                <Text style={[styles.cell, styles.cellText, { flex: 1, width: `${100 / 6}%` }]}>{stats.happy}</Text>
+                <Text style={[styles.cell, styles.cellText, { flex: 1, width: `${100 / 6}%` }]}>{stats.neutral}</Text>
+                <Text style={[styles.cell, styles.cellText, { flex: 1, width: `${100 / 6}%` }]}>{stats.sad}</Text>
+                <Text style={[styles.cell, styles.cellText, { flex: 1, width: `${100 / 6}%` }]}>{stats.angry}</Text>
+                <Text style={[styles.cell, styles.cellText, { flex: 1, width: `${100 / 6}%` }]}>{stats.tired}</Text>
+              </TableRow>
+            ))}
+          </Table>
+        </ScrollView>
 
-        {/* Графики */}
         <ScrollView style={styles.chartContainer}>
           {Object.entries(moodStats).map(([date, stats]) => {
             const maxValue = getMaxValue(stats);
@@ -140,7 +143,6 @@ const StatsScreen = () => {
           })}
         </ScrollView>
 
-        {/* Модальное окно для экспорта */}
         <Modal animationType="slide" transparent={true} visible={exportModalVisible} onRequestClose={() => setExportModalVisible(false)}>
           <View style={styles.modalContainer}>
             <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalContent}>
@@ -156,7 +158,6 @@ const StatsScreen = () => {
           </View>
         </Modal>
 
-        {/* Модальное окно для импорта */}
         <Modal animationType="slide" transparent={true} visible={importModalVisible} onRequestClose={() => setImportModalVisible(false)}>
           <View style={styles.modalContainer}>
             <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalContent}>
@@ -179,7 +180,6 @@ const StatsScreen = () => {
           </View>
         </Modal>
 
-        {/* Модальное окно для подробностей дня */}
         <Modal animationType="slide" transparent={true} visible={detailModalVisible} onRequestClose={() => setDetailModalVisible(false)}>
           <View style={styles.modalContainer}>
             <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalContent}>
@@ -259,7 +259,6 @@ const styles = StyleSheet.create({
   table: {
     width: '100%',
     flexDirection: 'row',
-    flexWrap: 'wrap',
   },
   cell: {
     padding: 12,
@@ -267,7 +266,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#E0E0E0',
     flex: 1,
-    minWidth: 0, // Убирает лишнее пространство
+    width: `${100 / 6}%`,
   },
   headerCell: {
     fontWeight: '700',

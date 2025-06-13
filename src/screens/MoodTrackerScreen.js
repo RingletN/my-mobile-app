@@ -1,5 +1,5 @@
 // MoodTrackerScreen.js
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,24 @@ import {
   Platform,
   useWindowDimensions,
   Alert,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 const MoodTrackerScreen = () => {
-  const { user, addMood } = useContext(AuthContext);
+  const { user, addMood, fetchRandomQuote, quote, isQuoteLoading, quoteError } = useContext(AuthContext);
   const [mood, setMood] = useState(null);
   const [note, setNote] = useState('');
+  const [quoteModalVisible, setQuoteModalVisible] = useState(false);
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+
+  useEffect(() => {
+    // Опциональная загрузка цитаты при старте
+    fetchRandomQuote();
+  }, [fetchRandomQuote]);
 
   const moods = ['😊', '😐', '😢', '😡', '🥱'];
 
@@ -39,6 +48,11 @@ const MoodTrackerScreen = () => {
     setNote('');
     setMood(null);
     Alert.alert('Успех', 'Настроение сохранено');
+  };
+
+  const loadQuote = async () => {
+    await fetchRandomQuote(); // Дожидаемся загрузки цитаты
+    setQuoteModalVisible(true); // Открываем модальное окно только после получения цитаты
   };
 
   return (
@@ -62,9 +76,30 @@ const MoodTrackerScreen = () => {
         <TouchableOpacity style={[styles.saveButton, isLandscape && styles.saveButtonLandscape]} onPress={saveMood} disabled={!mood}>
           <Text style={styles.buttonText}>Сохранить настроение</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={[styles.quoteButton, isLandscape && styles.quoteButtonLandscape]} onPress={loadQuote} disabled={isQuoteLoading}>
+          <Text style={styles.buttonText}>{isQuoteLoading ? 'Загрузка...' : 'Получить цитату'}</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.helpButton} onPress={() => Alert.alert('Помощь', 'Выберите эмодзи и добавьте заметку')}>
           <Text style={styles.helpText}>?</Text>
         </TouchableOpacity>
+
+        <Modal animationType="slide" transparent={true} visible={quoteModalVisible} onRequestClose={() => setQuoteModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Вдохновляющая цитата</Text>
+              {isQuoteLoading ? (
+                <ActivityIndicator size="large" color="#5770C5" />
+              ) : quoteError ? (
+                <Text style={styles.modalText}>{quoteError}</Text>
+              ) : (
+                <Text style={styles.modalText}>{quote || 'Нажмите, чтобы загрузить цитату'}</Text>
+              )}
+              <TouchableOpacity style={styles.closeButton} onPress={() => setQuoteModalVisible(false)}>
+                <Text style={styles.buttonText}>Закрыть</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -98,7 +133,7 @@ const styles = StyleSheet.create({
   },
   moodsScroll: {
     marginVertical: 15,
-    maxHeight: 80,
+    maxHeight: 70,
     position: 'absolute',
     top: 80,
     left: 20,
@@ -111,21 +146,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moodButton: {
-    width: 60, // Вернул меньший размер
-    height: 60, // Вернул меньший размер
+    width: 50,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
-    borderRadius: 30,
+    borderRadius: 25,
     backgroundColor: '#f0f0f0',
-    padding: 10,
+    padding: 2,
   },
   selectedMood: {
     backgroundColor: '#5770C5',
-    // transform: [{ scale: 1.05 }], // Уменьшил масштаб
   },
   moodText: {
-    fontSize: 22, // Уменьшил размер текста
+    fontSize: 20,
     textAlign: 'center',
   },
   input: {
@@ -164,6 +198,22 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 10,
   },
+  quoteButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
+  },
+  quoteButtonLandscape: {
+    position: 'relative',
+    flex: 1,
+    marginHorizontal: 10,
+  },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
@@ -184,6 +234,44 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    width: '90%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#333',
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: '#FF4444',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
   },
 });
 
