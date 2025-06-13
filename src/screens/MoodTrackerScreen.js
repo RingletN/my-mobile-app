@@ -55,6 +55,13 @@ const MoodTrackerScreen = () => {
     setQuoteModalVisible(true); // Открываем модальное окно только после получения цитаты
   };
 
+  const addQuoteToNote = () => {
+    if (quote && note.indexOf(quote) === -1) { // Проверяем, чтобы цитата не дублировалась
+      setNote(prevNote => (prevNote ? `${prevNote}\n\n${quote}` : quote));
+    }
+    setQuoteModalVisible(false); // Закрываем модальное окно после добавления
+  };
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <View style={[styles.relativeContainer, isLandscape && styles.relativeContainerLandscape]}>
@@ -94,6 +101,9 @@ const MoodTrackerScreen = () => {
               ) : (
                 <Text style={styles.modalText}>{quote || 'Нажмите, чтобы загрузить цитату'}</Text>
               )}
+              <TouchableOpacity style={styles.addButton} onPress={addQuoteToNote} disabled={!quote || isQuoteLoading}>
+                <Text style={styles.buttonText}>Добавить цитату</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.closeButton} onPress={() => setQuoteModalVisible(false)}>
                 <Text style={styles.buttonText}>Закрыть</Text>
               </TouchableOpacity>
@@ -268,6 +278,13 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     backgroundColor: '#FF4444',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  addButton: {
+    backgroundColor: '#4CAF50',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
